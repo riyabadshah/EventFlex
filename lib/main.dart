@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'services/api_service.dart';
+
 
 void main() {
   runApp(const EventFlexApp());
@@ -761,7 +763,46 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  void continueToApp() {
+  Future<void> continueToApp() async {
+  try {
+    if (email.text.trim().isEmpty || password.text.isEmpty) {
+      showInfo(context, 'Please enter email and password.');
+      return;
+    }
+
+    if (!isLogin && name.text.trim().isEmpty) {
+      showInfo(context, 'Please enter your full name.');
+      return;
+    }
+
+    if (!isLogin && phone.text.trim().isEmpty) {
+      showInfo(context, 'Please enter your phone number.');
+      return;
+    }
+
+    final role = widget.userType == UserType.organizer
+        ? 'organizer'
+        : 'professional';
+
+    if (isLogin) {
+      // LOGIN
+      await ApiService.login(
+        email: email.text.trim(),
+        password: password.text,
+      );
+    } else {
+      // SIGNUP
+      await ApiService.register(
+        name: name.text.trim(),
+        email: email.text.trim(),
+        phone: phone.text.trim(),
+        password: password.text,
+        role: role,
+      );
+    }
+
+    if (!mounted) return;
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -770,7 +811,15 @@ class _AuthScreenState extends State<AuthScreen> {
             : const ProfessionalShell(),
       ),
     );
+  } catch (e) {
+    if (!mounted) return;
+
+    showInfo(
+      context,
+      e.toString().replaceFirst('Exception: ', ''),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
