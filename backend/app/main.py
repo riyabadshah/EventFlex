@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import get_db
-from .routers import auth
+from .routers import auth, events,applications, attendance, payments, reviews
 
 app = FastAPI(
     title="EventFlex API",
@@ -20,6 +20,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(auth.router) 
+app.include_router(events.router)
+app.include_router(applications.router)
+app.include_router(attendance.router)
+app.include_router(payments.router)
+app.include_router(reviews.router)
 
 
 @app.get("/")

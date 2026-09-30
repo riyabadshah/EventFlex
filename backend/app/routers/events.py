@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Event
+from ..models import Event, EventRole
 
 router = APIRouter(
     prefix="/api/events",
@@ -64,3 +64,42 @@ def get_events(db: Session = Depends(get_db)):
         }
         for event in events
     ]
+@router.post("/{event_id}/roles")
+def create_event_role(
+    event_id: int,
+    role: dict,
+    db: Session = Depends(get_db)
+):
+    event = db.query(Event).filter(Event.id == event_id).first()
+
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    new_role = EventRole(
+        event_id=event_id,
+        role_name=role.get("role_name"),
+        description=role.get("description"),
+        people_required=role.get("people_required"),
+        payment=role.get("payment"),
+        skills=role.get("skills")
+    )
+
+    if not new_role.role_name:
+        raise HTTPException(status_code=400, detail="Role name is required")
+
+    db.add(new_role)
+    db.commit()
+    db.refresh(new_role)
+
+    return {
+        "message": "Event role created successfully",
+        "role": {
+            "id": new_role.id,
+            "event_id": new_role.event_id,
+            "role_name": new_role.role_name,
+            "description": new_role.description,
+            "people_required": new_role.people_required,
+            "payment": new_role.payment,
+            "skills": new_role.skills
+        }
+    }
